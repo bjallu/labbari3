@@ -196,16 +196,16 @@ def trainBoost(base_classifier, X, labels, T=10):
 
         # TODO: Fill in the rest, construct the alphas etc.
         # ==========================
-        tmp_e = np.asarray(([1]*len(vote) - [1 if val==labels[ind] else 0 for ind,val in enumerote(vote)]))
+        tmp_e = np.asarray([1]*len(vote)) - np.asarray([1 if val==labels[ind] else 0 for ind,val in enumerate(vote)])
         tmp_e.shape = (Npts,1)
         e_t = np.sum(wCur*tmp_e)
 
         alpha_t = 0.5*(np.log(1-e_t)-np.log(e_t))
         alphas.append(alpha_t) # you will need to append the new alpha
 
-        new_w = np.asarray([np.exp(-alpha_t) if val==labels[ind] else np.exp(alpha_t) for ind,val in enumerate(vote)]).T
-        #new_w.shape = (Npts,1)
-        new_w = wCur*new_w
+        new_w = np.asarray([np.exp(-alpha_t) if val==labels[ind] else np.exp(alpha_t) for ind,val in enumerate(vote)])
+        new_w.shape = (Npts,1)
+        new_w = np.multiply(new_w,wCur)
         wCur = new_w/sum(new_w)
         # ==========================
         
@@ -230,6 +230,12 @@ def classifyBoost(X, classifiers, alphas, Nclasses):
         # here we can do it by filling in the votes vector with weighted votes
         # ==========================
         
+        for t in range(len(alphas)):
+            curr_alpha = alphas[t]
+            curr_h = classifiers[t].classify(X)
+            for c in range(Nclasses):
+                votes[:,c] += np.asarray([curr_alpha if val==c else 0 for ind,val in enumerate(curr_h)]).T
+
         # ==========================
 
         # one way to compute yPred after accumulating the votes
@@ -280,7 +286,7 @@ class BoostClassifier(object):
 
 
 
-testClassifier(BoostClassifier(DecisionTreeClassifier(), T=10), dataset='iris',split=0.7)
+#testClassifier(BoostClassifier(DecisionTreeClassifier(), T=10), dataset='iris',split=0.7)
 
 
 
